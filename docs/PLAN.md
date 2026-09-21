@@ -4,8 +4,8 @@
 > L'utilisateur décrit en langage naturel la macro qu'il veut, un modèle (Claude) l'interprète,
 > pose des questions si besoin, et renvoie une macro prête à importer en jeu.
 >
-> État des références API : **21 septembre 2026**. Hypothèse retenue : « retail et forcer » = Retail **et Classic**
-> (MoP Classic, Classic Era, Anniversary). À confirmer.
+> État des références API : **21 septembre 2026**. Périmètre confirmé : **Retail** et **Classic Era / WoW: Forever**
+> (voir 1.4 pour la distinction Era ↔ Forever, qui sont deux clients différents).
 
 ---
 
@@ -94,37 +94,66 @@ monétisation ne peut porter que sur le service web (c'est exactement le modèle
 
 | Besoin | API |
 |---|---|
-| Détecter la version du jeu | `WOW_PROJECT_ID` vs `WOW_PROJECT_MAINLINE`, `WOW_PROJECT_CLASSIC`, `WOW_PROJECT_MISTS_CLASSIC`… ; `GetBuildInfo()` |
+| Détecter la version du jeu | `WOW_PROJECT_ID` vs `WOW_PROJECT_MAINLINE`, `WOW_PROJECT_CLASSIC` ; `GetBuildInfo()` (1.60.x = Forever, 1.15.x = Era) ; tester la présence des namespaces `C_*` plutôt que supposer |
 | Identité | `BNGetInfo()` → BattleTag du joueur ; `UnitName("player")`, `GetRealmName()`, `GetNormalizedRealmName()` |
-| Classe / spé / niveau | `UnitClass`, `UnitLevel`, `GetSpecialization()` + `GetSpecializationInfo()` (retail), talents via `C_ClassTalents` / `C_Traits` (retail) ou `GetTalentInfo` (Classic) |
-| Sorts connus | `C_SpellBook.*` (retail ≥ 11.0), `GetSpellBookItemName` (Classic) → **liste exacte des noms de sorts** envoyée au modèle |
+| Classe / spé / niveau | `UnitClass`, `UnitLevel`, `GetSpecialization()` + `GetSpecializationInfo()` (Retail), talents via `C_ClassTalents` / `C_Traits` (Retail) ou `GetTalentInfo` / `GetNumTalentTabs` (Era, Forever à vérifier sur la bêta) |
+| Sorts connus | `C_SpellBook.*` (Retail ≥ 11.0 et Forever), `GetSpellBookItemName` / `GetSpellBookItemInfo` (Era) → **liste exacte des noms de sorts** envoyée au modèle |
 | Objets équipés / sac | `GetInventoryItemID`, `C_Container.GetContainerItemID` |
 | Barres d'action | `GetActionInfo(slot)` (pour proposer de remplacer un bouton) |
 | **Créer / modifier la macro** | `CreateMacro(name, icon, body, perCharacter)`, `EditMacro`, `GetMacroInfo`, `GetNumMacros()` |
 | Presse-papier | pas d'API : on affiche un `EditBox` avec le texte pré-sélectionné (Ctrl+C / Ctrl+V manuel) |
 
-Limites des macros (identiques Retail / Classic modernes) : **corps ≤ 255 caractères**, nom ≤ 16 caractères,
+Limites des macros (identiques sur les trois clients) : **corps ≤ 255 caractères**, nom ≤ 16 caractères,
 **120 macros de compte + 18 par personnage**. `CreateMacro` / `EditMacro` sont **bloqués en combat**.
 
-### 1.4 Versions d'Interface (fichiers TOC)
+### 1.5 Ressources de développement d'addons (Lua / XML)
 
-Le client supporte les TOC par version (`MonAddon_Mainline.toc`, `_Mists.toc`, `_Vanilla.toc`, `_TBC.toc`,
-`_Wrath.toc`) **et** la directive multi-versions `## Interface: 120200, 50504, 11509, 20506`.
-
-| Client (sept. 2026) | Suffixe TOC | Interface (à confirmer en jeu) |
+| Ressource | Usage | Lien |
 |---|---|---|
-| Retail — Midnight 12.2.x | `_Mainline` | `1202xx` |
-| Mists of Pandaria Classic 5.5.x | `_Mists` | `5050x` |
-| Classic Era / Hardcore / SoD 1.15.x | `_Vanilla` | `1150x` |
-| Anniversary (TBC) 2.5.x | `_TBC` | `2050x` |
-| Titan Reforged (Wrath) | `_Wrath` | `3800x` |
+| Warcraft Wiki — portail API (filtres Retail / Classic / Era) | Référence principale de chaque fonction, avec badges de version | https://warcraft.wiki.gg/wiki/World_of_Warcraft_API |
+| Warcraft Wiki — UI beginner's guide | Démarrage addon, TOC, frames, événements | https://warcraft.wiki.gg/wiki/UI_beginner%27s_guide |
+| Townlong Yak — FrameXML live | Explorateur des tables d'API et globals du build Retail courant | https://townlong-yak.com/framexml/live |
+| Townlong Yak — FrameXML classic | Idem pour Classic Era / Forever | https://townlong-yak.com/framexml/classic |
+| Gethe/wow-ui-source | Code FrameXML officiel décompressé ; branches `live` (Retail), `forever`, `classic_era`, `ptr`, `beta`, `classic_era_ptr` | https://github.com/Gethe/wow-ui-source |
+| WoWInterface | Tutoriels, forums de dev, bibliothèques | https://www.wowinterface.com |
+| Discord WoW UI | Échanges entre développeurs d'addons (canaux par version) | https://discord.gg/wowui |
+| p3lim/toc-interface-updater | CI : numéros d'Interface à jour pour chaque client | https://github.com/p3lim/toc-interface-updater |
+| BigWigsMods/packager | Packaging et publication CurseForge / Wago / WoWInterface | https://github.com/BigWigsMods/packager |
+
+Méthode de travail : pour chaque fonction utilisée dans `Compat.lua`, vérifier le badge de version sur le wiki,
+puis confirmer dans la branche FrameXML correspondante (`live` / `forever` / `classic_era`) et sur Townlong Yak.
+
+### 1.4 Clients ciblés, versions d'Interface et fichiers TOC
+
+**Classic Era et WoW: Forever sont deux clients distincts** (vérifié le 21/09/2026) :
+
+| Client | Version | Produit Battle.net | Type de jeu (TOC) | Suffixe TOC | Branche FrameXML (Gethe) | Interface |
+|---|---|---|---|---|---|---|
+| Retail — Midnight 12.2.x | 12.2.x | `wow` | `mainline` | `_Mainline` | `live` | `1202xx` |
+| **WoW: Forever** (Classic+, bêta depuis le 17/09/2026, sortie le **4 novembre 2026**) | 1.60.x | `wow_forever` | `camelot` | `_Forever` | `forever` | `16001` |
+| Classic Era / Hardcore / SoD | 1.15.x | `wow_classic_era` | `vanilla` | `_Vanilla` | `classic_era` | `1150x` |
+| (hors périmètre) MoP Classic, Anniversary (TBC), Titan Reforged (Wrath) | 5.5.x / 2.5.x / 3.8.x | `wow_classic`, `wow_anniversary`, `wow_classic_titan` | `mists`, `tbc`, `wrath` | `_Mists`, `_TBC`, `_Wrath` | `classic`, `classic_anniversary`, `classic_titan` | — |
+
+Point technique décisif : **Forever tourne sur l'architecture UI moderne** (les namespaces `C_Spell`,
+`C_SpellBook`, `C_UnitAuras` existent, le Cooldown Manager de Blizzard est présent) avec du contenu vanilla,
+alors que **Classic Era garde la couche d'API restreinte** (beaucoup de `C_*` absents, anciennes fonctions
+globales encore présentes). En pratique, le code Retail se porte plus facilement sur Forever que sur Era.
+Sur warcraft.wiki.gg, les badges de version en haut de chaque page de fonction disent si elle est active sur Era.
+
+Le client supporte les TOC par version **et** la directive multi-versions `## Interface: 120200, 16001, 11509`
+(ainsi que les clés `## Interface-Forever:` / `## Interface-Vanilla:` du packager BigWigs).
+Décision : **trois TOC** (`MacroAI_Mainline.toc`, `MacroAI_Forever.toc`, `MacroAI_Vanilla.toc`) et une couche
+d'abstraction Lua `Compat.lua` qui choisit l'implémentation selon `WOW_PROJECT_ID` et la présence des `C_*`.
 
 Règle : ne jamais figer ces numéros à la main. Commande en jeu `/dump select(4, GetBuildInfo())` et, en CI,
-l'action GitHub **p3lim/toc-interface-updater** (met à jour tous les TOC automatiquement, PTR/beta inclus).
+l'action GitHub **p3lim/toc-interface-updater** (flavors `retail`, `forever`/`camelot`, `vanilla`/`classic_era`,
+lit `https://us.version.battle.net/v2/products/{produit}/versions`, PTR/bêta inclus).
 
-Différences Retail / Classic à gérer dans le générateur de macros : noms de sorts différents, conditionnels
-absents ou différents (ex. `[known:…]`, `@cursor`, `/cast` de rangs en Classic Era `Rank 3`), pas de
-spécialisations en Classic Era, `#showtooltip` disponible partout, `/castsequence`, `/stopcasting`, `/cancelaura`.
+Différences Retail / Forever / Era à gérer dans le générateur de macros : noms et rangs de sorts
+(`/cast Frostbolt(Rank 3)` en Era), conditionnels absents ou différents (`[known:…]`, `[spec:…]`, `@cursor`),
+pas de spécialisations en Era, talents et sorts inédits de Forever (nouvelles zones, race, combinaisons
+classe/race, compétences 1-60), `#showtooltip`, `/castsequence`, `/stopcasting`, `/cancelaura` communs.
+Chaque client a **son propre fichier de référence de macros** côté serveur.
 
 ---
 
@@ -158,8 +187,8 @@ spécialisations en Classic Era, `#showtooltip` disponible partout, `/castsequen
 - **Import** : décode, vérifie la longueur (≤ 255), la limite de macros, hors combat ; propose *Créer* /
   *Remplacer une macro existante* / *Placer sur la barre d'action* (`PickupMacro`). Affiche la macro et
   l'explication.
-- **Compatibilité** : un dossier, TOC multi-version, code conditionné par `WOW_PROJECT_ID`, tests sur Retail,
-  MoP Classic, Classic Era, Anniversary.
+- **Compatibilité** : un dossier, trois TOC (`_Mainline`, `_Forever`, `_Vanilla`), `Compat.lua` qui isole
+  les différences d'API (spellbook, talents, conteneurs) ; tests sur Retail, la bêta de Forever et Classic Era.
 - **Libs** : Ace3 (AceAddon, AceGUI, AceDB, AceLocale) — standard, éprouvé sur toutes les versions.
 - **Packaging** : BigWigsMods/packager → CurseForge, Wago Addons, WoWInterface. Localisation FR/EN au minimum.
 
@@ -228,14 +257,14 @@ spécialisations en Classic Era, `#showtooltip` disponible partout, `/castsequen
 Wow-plugin/
 ├── addon/                      # MacroAI (Lua)
 │   ├── MacroAI.toc             # ## Interface: multi-versions (mis à jour en CI)
-│   ├── MacroAI_Mainline.toc / _Mists.toc / _Vanilla.toc / _TBC.toc
+│   ├── MacroAI_Mainline.toc / MacroAI_Forever.toc / MacroAI_Vanilla.toc
 │   ├── Libs/                   # Ace3, LibSerialize, LibDeflate (via packager .pkgmeta)
-│   ├── Core.lua, Context.lua, Export.lua, Import.lua, UI.lua
+│   ├── Core.lua, Compat.lua, Context.lua, Export.lua, Import.lua, UI.lua
 │   └── Locales/ (frFR, enUS)
 ├── web/                        # Next.js + Auth.js + Supabase
 │   ├── app/ (login, generate, history, account, api/)
 │   ├── lib/ (anthropic, blizzard, quotas, codec)
-│   └── prompts/ (macro-retail.md, macro-mists.md, macro-era.md, …)
+│   └── prompts/ (macro-retail.md, macro-forever.md, macro-era.md)
 ├── packages/
 │   ├── codec/                  # encode/decode chaîne d'export-import (TS, compatible LibDeflate)
 │   └── macro-lint/             # validateur déterministe de macros par version
@@ -252,11 +281,12 @@ Wow-plugin/
 - [ ] Créer le client OAuth sur develop.battle.net (redirect `http://localhost:3000/api/auth/callback/battlenet`).
 - [ ] Choisir le nom (vérifier la disponibilité sur CurseForge / Wago / nom de domaine).
 - [ ] Script Node : coller une demande + contexte fictif → Claude → macro + linter. Valider la qualité sur 20 cas.
-- [ ] Prototype Lua minimal : fenêtre, `CreateMacro` depuis une chaîne collée, sur Retail et MoP Classic.
+- [ ] Prototype Lua minimal : fenêtre, `CreateMacro` depuis une chaîne collée, sur Retail, bêta Forever et Classic Era.
+- [ ] Inventaire `Compat.lua` : pour chaque API nécessaire, disponibilité Retail / Forever / Era (wiki + FrameXML).
 
 ### Phase 1 — MVP (4 à 6 semaines)
 **Addon**
-- [ ] Collecte de contexte (classe/spé/niveau/talents/sorts connus) Retail + Classic.
+- [ ] Collecte de contexte (classe/spé/niveau/talents/sorts connus) Retail + Forever + Era.
 - [ ] Export (LibSerialize + LibDeflate) et Import (création, remplacement, limites, hors combat).
 - [ ] UI AceGUI, `/macroai`, minimap/bouton optionnel, localisation FR/EN.
 - [ ] Packaging CurseForge/Wago + CI (toc-interface-updater, luacheck).
@@ -264,7 +294,8 @@ Wow-plugin/
 **Web**
 - [ ] Auth Battle.net, tables `users`, `sessions`, `requests`, `macros`, `quotas`.
 - [ ] Décodeur de chaîne, page *Générer* avec chat streaming, questions cliquables, chaîne d'import.
-- [ ] Prompts par version + linter + validation des sorts (liste addon, puis Game Data API).
+- [ ] Prompts par client (Retail / Forever / Era) + linter + validation des sorts (liste addon, puis Game Data API).
+- [ ] Suivre la bêta Forever (sortie 4 nov. 2026) : adapter `Compat.lua` et la référence de macros aux nouveautés.
 - [ ] Quotas gratuits, rate-limit IP, disjoncteur budget, journal des coûts.
 - [ ] Pages légales (CGU, confidentialité, mention Blizzard), page d'aide « comment ça marche ».
 
@@ -291,10 +322,11 @@ Wow-plugin/
 | Le modèle invente des noms de sorts | Liste des sorts connus envoyée par l'addon + validation Game Data + linter bloquant |
 | Coût IA vs gratuit | Quotas serrés, prompt caching, Sonnet 5 pour le tier gratuit si l'eval le permet, disjoncteur |
 | Numéros d'Interface qui changent à chaque patch | CI automatique, TOC multi-versions |
+| Forever encore en bêta (API mouvante jusqu'au 4 nov. 2026) | `Compat.lua` par détection de fonctionnalités, tests sur la bêta, branche `forever` de wow-ui-source suivie |
+| Blizzard Game Data API : pas de namespace connu pour Forever à ce jour | Validation des sorts d'abord via la liste envoyée par l'addon ; surveiller l'apparition d'un namespace `static-classic…` dédié |
 | Politique Blizzard (addon payant interdit) | Addon 100 % gratuit ; premium uniquement côté web |
 | Partage de compte / scripts | Liaison personnage ↔ compte Battle.net, rate-limit IP, limites hebdo |
 | Confidentialité (BattleTag, personnages) | Données minimales, suppression de compte, hébergement UE (OVH) possible |
-| « forcer » dans la demande initiale | Interprété comme *Classic* ; à confirmer (quelles versions Classic prioriser ?) |
 | Nom du produit | À choisir avant la phase 1 (dépôts CurseForge, domaine) |
 
 ---
@@ -314,3 +346,5 @@ Wow-plugin/
 - AskMrRobot (modèle export/import) : https://www.askmrrobot.com/guides/addon-documentation
 - WeakAuras Companion (modèle compagnon) : https://github.com/WeakAuras/WeakAuras-Companion
 - Patch actuel : https://warcraft.wiki.gg/wiki/Patch_12.2.5 · https://news.blizzard.com/en-us/article/24296142/hotfixes-september-17-2026
+- WoW: Forever (1.60.x, Interface 16001, type `camelot`, API moderne) : https://github.com/fooxytv/CooldownManagerClassic/issues/80 · branches FrameXML : https://github.com/Gethe/wow-ui-source
+- Ressources de développement : https://warcraft.wiki.gg/wiki/World_of_Warcraft_API · https://warcraft.wiki.gg/wiki/UI_beginner%27s_guide · https://townlong-yak.com/framexml/live · https://townlong-yak.com/framexml/classic · https://www.wowinterface.com · https://discord.gg/wowui
