@@ -5,7 +5,7 @@
 > pose des questions si besoin, et renvoie une macro prête à importer en jeu.
 >
 > État des références API : **21 septembre 2026**. Périmètre confirmé : **Retail** et **Classic Era / WoW: Forever**
-> (voir 1.4 pour la distinction Era ↔ Forever, qui sont deux clients différents).
+> (voir 1.5 pour la distinction Era ↔ Forever, qui sont deux clients différents).
 
 ---
 
@@ -106,7 +106,7 @@ monétisation ne peut porter que sur le service web (c'est exactement le modèle
 Limites des macros (identiques sur les trois clients) : **corps ≤ 255 caractères**, nom ≤ 16 caractères,
 **120 macros de compte + 18 par personnage**. `CreateMacro` / `EditMacro` sont **bloqués en combat**.
 
-### 1.5 Ressources de développement d'addons (Lua / XML)
+### 1.4 Ressources de développement d'addons (Lua / XML)
 
 | Ressource | Usage | Lien |
 |---|---|---|
@@ -123,7 +123,7 @@ Limites des macros (identiques sur les trois clients) : **corps ≤ 255 caractè
 Méthode de travail : pour chaque fonction utilisée dans `Compat.lua`, vérifier le badge de version sur le wiki,
 puis confirmer dans la branche FrameXML correspondante (`live` / `forever` / `classic_era`) et sur Townlong Yak.
 
-### 1.4 Clients ciblés, versions d'Interface et fichiers TOC
+### 1.5 Clients ciblés, versions d'Interface et fichiers TOC
 
 **Classic Era et WoW: Forever sont deux clients distincts** (vérifié le 21/09/2026) :
 
