@@ -1,6 +1,6 @@
 # WoW Macro Assistant — Plan de projet
 
-> Addon World of Warcraft (Retail + Classic) + application web avec authentification Battle.net.
+> Addon World of Warcraft (Retail, WoW: Forever, Classic Era) + application web avec authentification Battle.net.
 > L'utilisateur décrit en langage naturel la macro qu'il veut, un modèle (Claude) l'interprète,
 > pose des questions si besoin, et renvoie une macro prête à importer en jeu.
 >
